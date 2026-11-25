@@ -157,6 +157,42 @@
       .turn-banner .who-you { color: var(--you); }
       .turn-banner .who-robo { color: var(--robo); }
 
+      .timer-wrap { margin-bottom: 12px; }
+      .timer-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        margin-bottom: 5px;
+      }
+      .timer-label {
+        font-family: "Fredoka", sans-serif;
+        font-weight: 600;
+        font-size: 1rem;
+        color: var(--ink-soft);
+      }
+      .timer-num {
+        font-family: "Fredoka", sans-serif;
+        font-weight: 700;
+        font-size: 1.35rem;
+        min-width: 3ch;
+        text-align: right;
+      }
+      .timer-num.low { color: var(--red); animation: pulse 0.5s ease infinite alternate; }
+      @keyframes pulse {
+        from { transform: scale(1); }
+        to { transform: scale(1.18); }
+      }
+      .timer-track { height: 14px; border-radius: 999px; background: #dfe9e3; overflow: hidden; }
+      .timer-fill {
+        height: 100%;
+        width: 100%;
+        background: var(--green);
+        border-radius: 999px;
+        transition: width 0.1s linear;
+      }
+      .timer-fill.mid { background: var(--gold); }
+      .timer-fill.low { background: var(--red); }
+
       .swatches {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -183,7 +219,7 @@
       }
       .sw .pts {
         font-weight: 800;
-        font-size: 0.95rem;
+        font-size: 1.1rem;
         margin-top: 6px;
         min-height: 1.2em;
       }
@@ -267,6 +303,8 @@
       @media (prefers-reduced-motion: reduce) {
         .pop { animation: none; }
         .fill { transition: none; }
+        .timer-fill { transition: none; }
+        .timer-num.low { animation: none; }
       }
 
       .actions { margin-top: 18px; display: grid; gap: 10px; }
@@ -380,7 +418,7 @@
             <span class="small">Play against Robo. Same colours, best mixer wins.</span>
           </button>
         </div>
-        <p class="howto">Mix red, green and blue to copy the target colour. Five rounds. Closest match wins the most points.</p>
+        <p class="howto">Race the clock! Mix red, green and blue to copy the target colour. Your score counts live — hit 100 and the round locks in on the spot. Five rounds, 30 seconds each.</p>
       </section>
 
       <!-- GAME -->
@@ -391,6 +429,13 @@
             <span class="pips" id="pips" aria-hidden="true"></span>
           </div>
           <div class="scores-line" id="scores-line"></div>
+          <div class="timer-wrap">
+            <div class="timer-top">
+              <span class="timer-label">Time left</span>
+              <span class="timer-num" id="timer-num">30</span>
+            </div>
+            <div class="timer-track"><div class="timer-fill" id="timer-fill"></div></div>
+          </div>
           <p class="turn-banner" id="turn-banner">Copy the target colour.</p>
 
           <div class="swatches" id="swatches">
@@ -419,7 +464,6 @@
           </div>
 
           <div class="actions">
-            <button class="big-btn check" id="btn-check" type="button">Check my colour</button>
             <button class="big-btn next" id="btn-next" type="button" hidden>Next round</button>
             <button class="ghost-btn" id="btn-quit" type="button">Change mode</button>
           </div>
@@ -463,14 +507,20 @@
         var round = 0;
         var mix = [0, 0, 0];
         var aiMix = null;
-        var checked = false;
+        var locked = false;
         var youScores = [];
         var roboScores = [];
+        var times = [];
+        var ROUND_MS = 30000;
+        var timerId = null;
+        var advanceId = null;
+        var roundStart = 0;
+        var timeLeft = ROUND_MS;
 
         var el = {};
         ["screen-mode", "screen-game", "screen-final", "round-label", "pips", "scores-line",
-         "turn-banner", "swatches", "target-box", "mix-box", "mix-pts", "robo-box", "robo-pts",
-         "controls", "result", "verdict", "result-detail", "btn-check", "btn-next", "btn-quit",
+         "turn-banner", "timer-num", "timer-fill", "swatches", "target-box", "mix-box", "mix-pts", "robo-box", "robo-pts",
+         "controls", "result", "verdict", "result-detail", "btn-next", "btn-quit",
          "final-title", "winner-line", "totals", "breakdown", "btn-again", "btn-mode",
          "btn-solo", "btn-vsai"].forEach(function (id) { el[id] = document.getElementById(id); });
 
@@ -582,9 +632,10 @@
         }
 
         function changeChannel(idx, delta) {
-          if (checked) return;
+          if (locked) return;
           mix[idx] = Math.max(0, Math.min(255, mix[idx] + delta));
           renderMix();
+          if (scoreFor(mix, targets[round]) >= 100) submitRound(false);
         }
 
         function renderMix() {
@@ -593,6 +644,7 @@
             fills[ch.key].style.width = (mix[i] / 255 * 100) + "%";
             vals[ch.key].textContent = mix[i];
           });
+          el["mix-pts"].textContent = scoreFor(mix, targets[round]) + " / 100";
         }
 
         function renderTop() {
@@ -617,12 +669,47 @@
           el["scores-line"].innerHTML = line;
         }
 
+        function renderTimer() {
+          var secs = Math.max(0, Math.ceil(timeLeft / 1000));
+          el["timer-num"].textContent = secs;
+          var pct = Math.max(0, timeLeft / ROUND_MS * 100);
+          el["timer-fill"].style.width = pct + "%";
+          el["timer-fill"].className = "timer-fill" + (pct <= 25 ? " low" : pct <= 50 ? " mid" : "");
+          el["timer-num"].className = "timer-num" + (secs <= 10 ? " low" : "");
+        }
+
+        function startTimer() {
+          stopTimer();
+          roundStart = Date.now();
+          timeLeft = ROUND_MS;
+          renderTimer();
+          timerId = setInterval(function () {
+            timeLeft = ROUND_MS - (Date.now() - roundStart);
+            if (timeLeft <= 0) {
+              timeLeft = 0;
+              renderTimer();
+              submitRound(true);
+              return;
+            }
+            renderTimer();
+          }, 100);
+        }
+
+        function stopTimer() {
+          if (timerId) { clearInterval(timerId); timerId = null; }
+        }
+
+        function clearAdvance() {
+          if (advanceId) { clearTimeout(advanceId); advanceId = null; }
+        }
+
         function startGame(newMode) {
           mode = newMode;
           targets = [];
           for (var i = 0; i < ROUNDS; i++) targets.push(makeTarget());
           youScores = [];
           roboScores = [];
+          times = [];
           round = 0;
           el["screen-mode"].hidden = true;
           el["screen-final"].hidden = true;
@@ -631,36 +718,38 @@
         }
 
         function startRound() {
+          clearAdvance();
           mix = [0, 0, 0];
           aiMix = null;
-          checked = false;
+          locked = false;
           el["target-box"].style.background = rgb(targets[round]);
           el["robo-box"].style.background = "#000";
-          el["mix-pts"].textContent = "";
           el["robo-pts"].textContent = "";
           el.swatches.classList.remove("three");
           el.result.hidden = true;
-          el["btn-check"].hidden = false;
           el["btn-next"].hidden = true;
           stepBtns.forEach(function (b) { b.disabled = false; });
           el["turn-banner"].innerHTML = (mode === "vsai")
-            ? 'Copy the target colour. <span class="who-robo">Robo</span> is mixing too.'
-            : "Copy the target colour.";
+            ? 'Race the clock! Hit <strong>100</strong> to lock it in. <span class="who-robo">Robo</span> is mixing too.'
+            : "Race the clock! Hit <strong>100</strong> to lock it in.";
           renderMix();
           renderTop();
+          startTimer();
           window.scrollTo(0, 0);
         }
 
-        function doCheck() {
-          if (checked) return;
-          checked = true;
+        function submitRound(timedOut) {
+          if (locked) return;
+          locked = true;
+          stopTimer();
           var t = targets[round];
           var myScore = scoreFor(mix, t);
+          var used = (ROUND_MS - timeLeft) / 1000;
           youScores.push(myScore);
-          el["mix-pts"].textContent = myScore + " pts";
+          times.push(used);
+          el["mix-pts"].textContent = myScore + " / 100";
 
           stepBtns.forEach(function (b) { b.disabled = true; });
-          el["btn-check"].hidden = true;
           el["btn-next"].hidden = false;
           el["btn-next"].textContent = (round === ROUNDS - 1) ? "See the results" : "Next round";
 
@@ -669,12 +758,13 @@
           void el.result.offsetWidth;
           el.result.classList.add("pop");
 
+          var perfect = myScore >= 100;
           if (mode === "vsai") {
             aiMix = makeAiMix(t);
             var aiScore = scoreFor(aiMix, t);
             roboScores.push(aiScore);
             el["robo-box"].style.background = rgb(aiMix);
-            el["robo-pts"].textContent = aiScore + " pts";
+            el["robo-pts"].textContent = aiScore + " / 100";
             el.swatches.classList.add("three");
 
             if (myScore > aiScore) {
@@ -685,16 +775,32 @@
               el.verdict.textContent = "It is a tie!";
             }
             el["result-detail"].innerHTML =
-              verdictFor(myScore) + ' <span class="who-you">You scored ' + myScore + '.</span> ' +
+              (perfect ? "Perfect match in " + used.toFixed(1) + "s! " : timedOut ? "Time's up! " : "") +
+              '<span class="who-you">You scored ' + myScore + '.</span> ' +
               '<span class="who-robo">Robo scored ' + aiScore + '.</span>';
           } else {
-            el.verdict.textContent = verdictFor(myScore);
-            el["result-detail"].textContent = "You scored " + myScore + " out of 100.";
+            el.verdict.textContent = perfect ? "Perfect match!" : timedOut ? "Time's up!" : verdictFor(myScore);
+            el["result-detail"].textContent = perfect
+              ? "Locked in with " + (timeLeft / 1000).toFixed(1) + " seconds to spare!"
+              : "You scored " + myScore + " out of 100 in " + used.toFixed(1) + " seconds.";
           }
           renderTop();
+          advanceId = setTimeout(function () {
+            advanceId = null;
+            goNext();
+          }, 3000);
+        }
+
+        function goNext() {
+          clearAdvance();
+          if (round === ROUNDS - 1) { showFinal(); return; }
+          round++;
+          startRound();
         }
 
         function showFinal() {
+          stopTimer();
+          clearAdvance();
           el["screen-game"].hidden = true;
           el["screen-final"].hidden = false;
           var youTotal = sum(youScores);
@@ -730,7 +836,7 @@
           var bHtml = "";
           for (var i = 0; i < ROUNDS; i++) {
             bHtml += '<li><span class="b-swatch" style="background:' + rgb(targets[i]) + '"></span>' +
-              '<span class="b-round">Round ' + (i + 1) + '</span>';
+              '<span class="b-round">Round ' + (i + 1) + ' · ' + times[i].toFixed(1) + 's</span>';
             if (mode === "vsai") {
               var win = "";
               if (youScores[i] > roboScores[i]) win = "You won";
@@ -748,6 +854,8 @@
         }
 
         function goMode() {
+          stopTimer();
+          clearAdvance();
           el["screen-game"].hidden = true;
           el["screen-final"].hidden = true;
           el["screen-mode"].hidden = false;
@@ -756,12 +864,7 @@
 
         el["btn-solo"].addEventListener("click", function () { startGame("solo"); });
         el["btn-vsai"].addEventListener("click", function () { startGame("vsai"); });
-        el["btn-check"].addEventListener("click", doCheck);
-        el["btn-next"].addEventListener("click", function () {
-          if (round === ROUNDS - 1) { showFinal(); return; }
-          round++;
-          startRound();
-        });
+        el["btn-next"].addEventListener("click", goNext);
         el["btn-quit"].addEventListener("click", goMode);
         el["btn-mode"].addEventListener("click", goMode);
         el["btn-again"].addEventListener("click", function () { startGame(mode); });
