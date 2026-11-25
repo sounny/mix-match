@@ -1,0 +1,771 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="data:," />
+    <title>Mix &amp; Match</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet" />
+    <style>
+      button { min-height: 2rem; }
+      * { box-sizing: border-box; }
+      :root {
+        --bg: #0b5a3c;
+        --bg-deep: #08422c;
+        --panel: #ffffff;
+        --ink: #17352a;
+        --ink-soft: #4c6a5e;
+        --red: #e5322d;
+        --green: #17a34a;
+        --blue: #2b6de8;
+        --you: #f07d00;
+        --robo: #0d9488;
+        --gold: #ffb703;
+        --line: #dcebe3;
+      }
+      html, body { margin: 0; padding: 0; }
+      body {
+        font-family: "Nunito", system-ui, sans-serif;
+        background: var(--bg);
+        background-image: radial-gradient(circle at 15% 20%, rgba(255,255,255,0.08) 0 90px, transparent 91px),
+                          radial-gradient(circle at 88% 78%, rgba(255,255,255,0.06) 0 130px, transparent 131px),
+                          linear-gradient(160deg, var(--bg) 0%, var(--bg-deep) 100%);
+        min-height: 100vh;
+        color: var(--ink);
+        -webkit-tap-highlight-color: transparent;
+      }
+      .wrap {
+        max-width: 640px;
+        margin: 0 auto;
+        padding: 18px 14px 40px;
+      }
+      h1, h2, h3 { font-family: "Fredoka", "Nunito", sans-serif; margin: 0; }
+
+      /* ---------- Mode screen ---------- */
+      .hero {
+        text-align: center;
+        color: #fff;
+        padding: 22px 6px 6px;
+      }
+      .venn { display: block; margin: 0 auto 10px; }
+      .hero h1 {
+        font-size: clamp(2.4rem, 9vw, 3.4rem);
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        line-height: 1.05;
+      }
+      .hero .q {
+        font-size: clamp(1.05rem, 4.4vw, 1.3rem);
+        font-weight: 600;
+        margin: 12px auto 4px;
+        max-width: 420px;
+        line-height: 1.4;
+      }
+      .hero .sub {
+        font-size: 1rem;
+        opacity: 0.85;
+        margin: 4px auto 0;
+      }
+      .mode-grid {
+        display: grid;
+        gap: 14px;
+        margin-top: 26px;
+      }
+      @media (min-width: 560px) {
+        .mode-grid { grid-template-columns: 1fr 1fr; }
+      }
+      .mode-btn {
+        font-family: "Fredoka", sans-serif;
+        border: 4px solid rgba(255,255,255,0.35);
+        border-radius: 22px;
+        background: var(--panel);
+        color: var(--ink);
+        padding: 22px 16px 18px;
+        cursor: pointer;
+        text-align: center;
+        box-shadow: 0 8px 0 rgba(0,0,0,0.22);
+        transition: transform 0.08s ease, box-shadow 0.08s ease;
+        min-height: 120px;
+      }
+      .mode-btn:active { transform: translateY(5px); box-shadow: 0 3px 0 rgba(0,0,0,0.22); }
+      .mode-btn .big { display: block; font-size: 1.7rem; font-weight: 700; line-height: 1.1; }
+      .mode-btn .small { display: block; font-family: "Nunito", sans-serif; font-size: 0.95rem; font-weight: 700; color: var(--ink-soft); margin-top: 6px; }
+      .mode-btn .dots { display: flex; justify-content: center; gap: 6px; margin-bottom: 10px; }
+      .mode-btn .dots span { width: 20px; height: 20px; border-radius: 50%; display: block; }
+      .howto {
+        background: rgba(255,255,255,0.12);
+        border-radius: 16px;
+        color: #eafaf1;
+        padding: 14px 18px;
+        margin-top: 22px;
+        font-size: 0.98rem;
+        font-weight: 600;
+        line-height: 1.5;
+        text-align: center;
+      }
+
+      /* ---------- Game screen ---------- */
+      .card {
+        background: var(--panel);
+        border-radius: 24px;
+        padding: 18px 16px 20px;
+        box-shadow: 0 10px 24px rgba(0,0,0,0.25);
+      }
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-bottom: 12px;
+      }
+      .round-label {
+        font-family: "Fredoka", sans-serif;
+        font-size: 1.25rem;
+        font-weight: 600;
+      }
+      .pips { display: flex; gap: 6px; }
+      .pip { width: 14px; height: 14px; border-radius: 50%; background: var(--line); }
+      .pip.done { background: var(--gold); }
+      .pip.now { background: var(--ink); transform: scale(1.15); }
+      .scores-line {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-bottom: 14px;
+      }
+      .chip {
+        font-weight: 800;
+        font-size: 0.95rem;
+        border-radius: 999px;
+        padding: 6px 14px;
+        background: #eef6f1;
+        color: var(--ink);
+      }
+      .chip.you { background: #fff1de; color: #9a5200; }
+      .chip.robo { background: #e0f5f2; color: #0b5e56; }
+      .turn-banner {
+        font-family: "Fredoka", sans-serif;
+        font-size: 1.15rem;
+        font-weight: 600;
+        text-align: center;
+        margin: 2px 0 14px;
+      }
+      .turn-banner .who-you { color: var(--you); }
+      .turn-banner .who-robo { color: var(--robo); }
+
+      .swatches {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-bottom: 18px;
+      }
+      .swatches.three { grid-template-columns: 1fr 1fr 1fr; }
+      .sw { text-align: center; }
+      .sw .box {
+        height: 128px;
+        border-radius: 18px;
+        border: 3px solid rgba(0,0,0,0.10);
+        background: #000;
+      }
+      @media (max-width: 480px) {
+        .sw .box { height: 108px; }
+        .swatches.three .box { height: 92px; }
+      }
+      .sw .cap {
+        font-family: "Fredoka", sans-serif;
+        font-weight: 600;
+        font-size: 1rem;
+        margin-bottom: 6px;
+      }
+      .sw .pts {
+        font-weight: 800;
+        font-size: 0.95rem;
+        margin-top: 6px;
+        min-height: 1.2em;
+      }
+      .sw.robo-sw { display: none; }
+      .swatches.three .sw.robo-sw { display: block; }
+
+      .controls { display: grid; gap: 12px; }
+      .channel {
+        display: grid;
+        grid-template-columns: 60px 1fr 60px;
+        align-items: center;
+        gap: 10px;
+      }
+      .step-btn {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        border: none;
+        font-family: "Fredoka", sans-serif;
+        font-size: 2rem;
+        font-weight: 700;
+        line-height: 1;
+        color: #fff;
+        cursor: pointer;
+        box-shadow: 0 4px 0 rgba(0,0,0,0.25);
+        transition: transform 0.06s ease, box-shadow 0.06s ease, opacity 0.15s ease;
+        touch-action: manipulation;
+        user-select: none;
+        -webkit-user-select: none;
+        -webkit-touch-callout: none;
+      }
+      .step-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(0,0,0,0.25); }
+      .step-btn:disabled { opacity: 0.35; cursor: default; transform: none; }
+      .step-btn.r { background: var(--red); }
+      .step-btn.g { background: var(--green); }
+      .step-btn.b { background: var(--blue); }
+      .meter {
+        background: #eef3f0;
+        border-radius: 14px;
+        padding: 8px 12px 10px;
+      }
+      .meter .m-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        margin-bottom: 5px;
+      }
+      .meter .m-name { font-family: "Fredoka", sans-serif; font-weight: 600; font-size: 1.05rem; }
+      .meter .m-name.r { color: var(--red); }
+      .meter .m-name.g { color: var(--green); }
+      .meter .m-name.b { color: var(--blue); }
+      .meter .m-val { font-weight: 800; font-size: 1rem; color: var(--ink); min-width: 2ch; text-align: right; }
+      .track { height: 16px; border-radius: 999px; background: #dfe9e3; overflow: hidden; }
+      .fill { height: 100%; width: 0%; border-radius: 999px; transition: width 0.08s linear; }
+      .fill.r { background: var(--red); }
+      .fill.g { background: var(--green); }
+      .fill.b { background: var(--blue); }
+
+      .result {
+        margin-top: 18px;
+        text-align: center;
+        background: #fdf6e0;
+        border: 3px solid var(--gold);
+        border-radius: 18px;
+        padding: 14px 12px;
+      }
+      .result .verdict {
+        font-family: "Fredoka", sans-serif;
+        font-size: 1.6rem;
+        font-weight: 700;
+        line-height: 1.15;
+      }
+      .result .detail { font-weight: 800; font-size: 1.05rem; margin-top: 6px; }
+      .result .detail .who-you { color: #9a5200; }
+      .result .detail .who-robo { color: #0b5e56; }
+      .pop { animation: pop 0.35s ease; }
+      @keyframes pop {
+        0% { transform: scale(0.85); opacity: 0; }
+        100% { transform: scale(1); opacity: 1; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .pop { animation: none; }
+        .fill { transition: none; }
+      }
+
+      .actions { margin-top: 18px; display: grid; gap: 10px; }
+      .big-btn {
+        font-family: "Fredoka", sans-serif;
+        font-size: 1.35rem;
+        font-weight: 700;
+        border: none;
+        border-radius: 18px;
+        padding: 16px;
+        min-height: 60px;
+        cursor: pointer;
+        color: #fff;
+        background: var(--ink);
+        box-shadow: 0 5px 0 rgba(0,0,0,0.28);
+        transition: transform 0.06s ease, box-shadow 0.06s ease;
+      }
+      .big-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 rgba(0,0,0,0.28); }
+      .big-btn.check { background: #17352a; }
+      .big-btn.next { background: var(--you); }
+      .big-btn.again { background: var(--green); }
+      .ghost-btn {
+        font-family: "Nunito", sans-serif;
+        font-weight: 800;
+        font-size: 1rem;
+        border: 3px solid var(--line);
+        background: #fff;
+        color: var(--ink-soft);
+        border-radius: 18px;
+        padding: 12px;
+        min-height: 52px;
+        cursor: pointer;
+      }
+
+      /* ---------- Final screen ---------- */
+      .final-card { text-align: center; }
+      .final-card h2 {
+        font-size: clamp(1.8rem, 7vw, 2.4rem);
+        font-weight: 700;
+        margin-bottom: 6px;
+      }
+      .final-card .winner-line {
+        font-family: "Fredoka", sans-serif;
+        font-size: 1.3rem;
+        font-weight: 600;
+        margin: 4px 0 14px;
+      }
+      .totals {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
+        margin: 14px 0;
+      }
+      .totals.two { grid-template-columns: 1fr 1fr; }
+      .total-box {
+        border-radius: 18px;
+        padding: 14px 10px;
+        background: #eef6f1;
+      }
+      .total-box.you { background: #fff1de; }
+      .total-box.robo { background: #e0f5f2; }
+      .total-box .t-name { font-family: "Fredoka", sans-serif; font-weight: 600; font-size: 1.1rem; }
+      .total-box .t-score { font-family: "Fredoka", sans-serif; font-weight: 700; font-size: 2.2rem; line-height: 1.1; }
+      .total-box .t-out { font-weight: 800; color: var(--ink-soft); font-size: 0.9rem; }
+      .breakdown {
+        list-style: none;
+        margin: 6px 0 4px;
+        padding: 0;
+        text-align: left;
+      }
+      .breakdown li {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 7px 4px;
+        border-bottom: 2px solid var(--line);
+        font-weight: 700;
+        font-size: 0.98rem;
+      }
+      .breakdown li:last-child { border-bottom: none; }
+      .breakdown .b-swatch { width: 26px; height: 26px; border-radius: 8px; border: 2px solid rgba(0,0,0,0.12); flex: none; }
+      .breakdown .b-round { flex: 1; }
+      .breakdown .b-win { font-size: 0.85rem; font-weight: 800; }
+      [hidden] { display: none !important; }
+    </style>
+  </head>
+  <body>
+    <main class="wrap">
+
+      <!-- MODE SELECT -->
+      <section id="screen-mode">
+        <div class="hero">
+          <svg class="venn" width="92" height="72" viewBox="0 0 92 72" aria-hidden="true">
+            <circle cx="46" cy="26" r="20" fill="#e5322d" opacity="0.85" />
+            <circle cx="34" cy="48" r="20" fill="#17a34a" opacity="0.85" />
+            <circle cx="58" cy="48" r="20" fill="#2b6de8" opacity="0.85" />
+          </svg>
+          <h1>Mix &amp; Match</h1>
+          <p class="q">How are existing colours recreated?</p>
+          <p class="sub">Alone or against the robot, are you up to the challenge?</p>
+        </div>
+        <div class="mode-grid">
+          <button class="mode-btn" id="btn-solo" type="button">
+            <span class="dots"><span style="background:#e5322d"></span><span style="background:#17a34a"></span><span style="background:#2b6de8"></span></span>
+            <span class="big">Solo</span>
+            <span class="small">Play on your own. Beat your best score.</span>
+          </button>
+          <button class="mode-btn" id="btn-vsai" type="button">
+            <span class="dots"><span style="background:#f07d00"></span><span style="background:#0d9488"></span></span>
+            <span class="big">Vs AI</span>
+            <span class="small">Play against Robo. Same colours, best mixer wins.</span>
+          </button>
+        </div>
+        <p class="howto">Mix red, green and blue to copy the target colour. Five rounds. Closest match wins the most points.</p>
+      </section>
+
+      <!-- GAME -->
+      <section id="screen-game" hidden>
+        <div class="card">
+          <div class="topbar">
+            <span class="round-label" id="round-label">Round 1 of 5</span>
+            <span class="pips" id="pips" aria-hidden="true"></span>
+          </div>
+          <div class="scores-line" id="scores-line"></div>
+          <p class="turn-banner" id="turn-banner">Copy the target colour.</p>
+
+          <div class="swatches" id="swatches">
+            <div class="sw">
+              <div class="cap">Target</div>
+              <div class="box" id="target-box"></div>
+              <div class="pts"></div>
+            </div>
+            <div class="sw">
+              <div class="cap">Your mix</div>
+              <div class="box" id="mix-box"></div>
+              <div class="pts" id="mix-pts"></div>
+            </div>
+            <div class="sw robo-sw">
+              <div class="cap">Robo mix</div>
+              <div class="box" id="robo-box"></div>
+              <div class="pts" id="robo-pts"></div>
+            </div>
+          </div>
+
+          <div class="controls" id="controls"></div>
+
+          <div class="result" id="result" hidden>
+            <div class="verdict" id="verdict"></div>
+            <div class="detail" id="result-detail"></div>
+          </div>
+
+          <div class="actions">
+            <button class="big-btn check" id="btn-check" type="button">Check my colour</button>
+            <button class="big-btn next" id="btn-next" type="button" hidden>Next round</button>
+            <button class="ghost-btn" id="btn-quit" type="button">Change mode</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- FINAL -->
+      <section id="screen-final" hidden>
+        <div class="card final-card">
+          <svg class="venn" width="72" height="56" viewBox="0 0 92 72" aria-hidden="true" style="margin:0 auto 6px;">
+            <circle cx="46" cy="26" r="20" fill="#e5322d" opacity="0.85" />
+            <circle cx="34" cy="48" r="20" fill="#17a34a" opacity="0.85" />
+            <circle cx="58" cy="48" r="20" fill="#2b6de8" opacity="0.85" />
+          </svg>
+          <h2 id="final-title">Game over</h2>
+          <p class="winner-line" id="winner-line"></p>
+          <div class="totals" id="totals"></div>
+          <ul class="breakdown" id="breakdown"></ul>
+          <div class="actions">
+            <button class="big-btn again" id="btn-again" type="button">Play again</button>
+            <button class="ghost-btn" id="btn-mode" type="button">Change mode</button>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <script>
+      (function () {
+        var STEP = 15;
+        var ROUNDS = 5;
+        var MAX_DIST = Math.sqrt(3 * 255 * 255);
+        var CHANNELS = [
+          { key: "r", name: "Red", cls: "r" },
+          { key: "g", name: "Green", cls: "g" },
+          { key: "b", name: "Blue", cls: "b" }
+        ];
+
+        var mode = "solo"; // "solo" or "vsai"
+        var targets = [];
+        var round = 0;
+        var mix = [0, 0, 0];
+        var aiMix = null;
+        var checked = false;
+        var youScores = [];
+        var roboScores = [];
+
+        var el = {};
+        ["screen-mode", "screen-game", "screen-final", "round-label", "pips", "scores-line",
+         "turn-banner", "swatches", "target-box", "mix-box", "mix-pts", "robo-box", "robo-pts",
+         "controls", "result", "verdict", "result-detail", "btn-check", "btn-next", "btn-quit",
+         "final-title", "winner-line", "totals", "breakdown", "btn-again", "btn-mode",
+         "btn-solo", "btn-vsai"].forEach(function (id) { el[id] = document.getElementById(id); });
+
+        function rgb(c) { return "rgb(" + c[0] + "," + c[1] + "," + c[2] + ")"; }
+
+        function scoreFor(a, t) {
+          var d = Math.sqrt(
+            (a[0] - t[0]) * (a[0] - t[0]) +
+            (a[1] - t[1]) * (a[1] - t[1]) +
+            (a[2] - t[2]) * (a[2] - t[2])
+          );
+          return Math.max(0, Math.round(100 * (1 - d / MAX_DIST)));
+        }
+
+        function verdictFor(s) {
+          if (s >= 100) return "Perfect match!";
+          if (s >= 92) return "Amazing!";
+          if (s >= 78) return "So close!";
+          if (s >= 58) return "Good mixing!";
+          if (s >= 38) return "Getting warmer!";
+          return "Keep mixing!";
+        }
+
+        function makeTarget() {
+          var t, sum;
+          do {
+            t = [0, 1, 2].map(function () { return Math.round(Math.random() * 17) * STEP; });
+            sum = t[0] + t[1] + t[2];
+          } while (sum < 180 || sum > 720);
+          return t;
+        }
+
+        function makeAiMix(target) {
+          var roll = Math.random();
+          var want;
+          if (roll < 0.15) want = 90 + Math.random() * 8;        // great round
+          else if (roll < 0.30) want = 55 + Math.random() * 15;  // weak round
+          else want = 70 + Math.random() * 20;                   // typical round
+          var dist = (1 - want / 100) * MAX_DIST;
+          var v = [Math.random() * 2 - 1, Math.random() * 2 - 1, Math.random() * 2 - 1];
+          var len = Math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]) || 1;
+          return [0, 1, 2].map(function (i) {
+            var val = Math.round((target[i] + (v[i] / len) * dist) / STEP) * STEP;
+            return Math.max(0, Math.min(255, val));
+          });
+        }
+
+        function sum(arr) { return arr.reduce(function (a, b) { return a + b; }, 0); }
+
+        // Build channel controls once
+        var fills = {}, vals = {}, stepBtns = [];
+        CHANNELS.forEach(function (ch, i) {
+          var row = document.createElement("div");
+          row.className = "channel";
+
+          var minus = document.createElement("button");
+          minus.type = "button";
+          minus.className = "step-btn " + ch.cls;
+          minus.textContent = "−";
+          minus.setAttribute("aria-label", "Less " + ch.name.toLowerCase());
+
+          var meter = document.createElement("div");
+          meter.className = "meter";
+          meter.innerHTML =
+            '<div class="m-top"><span class="m-name ' + ch.cls + '">' + ch.name + '</span>' +
+            '<span class="m-val">0</span></div>' +
+            '<div class="track"><div class="fill ' + ch.cls + '"></div></div>';
+
+          var plus = document.createElement("button");
+          plus.type = "button";
+          plus.className = "step-btn " + ch.cls;
+          plus.textContent = "+";
+          plus.setAttribute("aria-label", "More " + ch.name.toLowerCase());
+
+          row.appendChild(minus);
+          row.appendChild(meter);
+          row.appendChild(plus);
+          el.controls.appendChild(row);
+
+          fills[ch.key] = meter.querySelector(".fill");
+          vals[ch.key] = meter.querySelector(".m-val");
+          stepBtns.push(minus, plus);
+          bindStep(minus, i, -STEP);
+          bindStep(plus, i, STEP);
+        });
+
+        function bindStep(btn, idx, delta) {
+          var delay = null, timer = null, suppress = false;
+          function step() { changeChannel(idx, delta); }
+          function clearTimers() {
+            if (delay) { clearTimeout(delay); delay = null; }
+            if (timer) { clearInterval(timer); timer = null; }
+          }
+          btn.addEventListener("pointerdown", function () {
+            if (btn.disabled) return;
+            delay = setTimeout(function () {
+              suppress = true;
+              step();
+              timer = setInterval(step, 70);
+            }, 400);
+          });
+          ["pointerup", "pointerleave", "pointercancel"].forEach(function (ev) {
+            btn.addEventListener(ev, clearTimers);
+          });
+          btn.addEventListener("click", function () {
+            if (suppress) { suppress = false; return; }
+            step();
+          });
+        }
+
+        function changeChannel(idx, delta) {
+          if (checked) return;
+          mix[idx] = Math.max(0, Math.min(255, mix[idx] + delta));
+          renderMix();
+        }
+
+        function renderMix() {
+          el["mix-box"].style.background = rgb(mix);
+          CHANNELS.forEach(function (ch, i) {
+            fills[ch.key].style.width = (mix[i] / 255 * 100) + "%";
+            vals[ch.key].textContent = mix[i];
+          });
+        }
+
+        function renderTop() {
+          el["round-label"].textContent = "Round " + (round + 1) + " of " + ROUNDS;
+          var pipsHtml = "";
+          for (var i = 0; i < ROUNDS; i++) {
+            var cls = "pip";
+            if (i < youScores.length) cls += " done";
+            else if (i === round) cls += " now";
+            pipsHtml += '<span class="' + cls + '"></span>';
+          }
+          el.pips.innerHTML = pipsHtml;
+
+          var line = "";
+          if (mode === "vsai") {
+            line =
+              '<span class="chip you">You: ' + sum(youScores) + '</span>' +
+              '<span class="chip robo">Robo: ' + sum(roboScores) + '</span>';
+          } else {
+            line = '<span class="chip">Score: ' + sum(youScores) + '</span>';
+          }
+          el["scores-line"].innerHTML = line;
+        }
+
+        function startGame(newMode) {
+          mode = newMode;
+          targets = [];
+          for (var i = 0; i < ROUNDS; i++) targets.push(makeTarget());
+          youScores = [];
+          roboScores = [];
+          round = 0;
+          el["screen-mode"].hidden = true;
+          el["screen-final"].hidden = true;
+          el["screen-game"].hidden = false;
+          startRound();
+        }
+
+        function startRound() {
+          mix = [0, 0, 0];
+          aiMix = null;
+          checked = false;
+          el["target-box"].style.background = rgb(targets[round]);
+          el["robo-box"].style.background = "#000";
+          el["mix-pts"].textContent = "";
+          el["robo-pts"].textContent = "";
+          el.swatches.classList.remove("three");
+          el.result.hidden = true;
+          el["btn-check"].hidden = false;
+          el["btn-next"].hidden = true;
+          stepBtns.forEach(function (b) { b.disabled = false; });
+          el["turn-banner"].innerHTML = (mode === "vsai")
+            ? 'Copy the target colour. <span class="who-robo">Robo</span> is mixing too.'
+            : "Copy the target colour.";
+          renderMix();
+          renderTop();
+          window.scrollTo(0, 0);
+        }
+
+        function doCheck() {
+          if (checked) return;
+          checked = true;
+          var t = targets[round];
+          var myScore = scoreFor(mix, t);
+          youScores.push(myScore);
+          el["mix-pts"].textContent = myScore + " pts";
+
+          stepBtns.forEach(function (b) { b.disabled = true; });
+          el["btn-check"].hidden = true;
+          el["btn-next"].hidden = false;
+          el["btn-next"].textContent = (round === ROUNDS - 1) ? "See the results" : "Next round";
+
+          el.result.hidden = false;
+          el.result.classList.remove("pop");
+          void el.result.offsetWidth;
+          el.result.classList.add("pop");
+
+          if (mode === "vsai") {
+            aiMix = makeAiMix(t);
+            var aiScore = scoreFor(aiMix, t);
+            roboScores.push(aiScore);
+            el["robo-box"].style.background = rgb(aiMix);
+            el["robo-pts"].textContent = aiScore + " pts";
+            el.swatches.classList.add("three");
+
+            if (myScore > aiScore) {
+              el.verdict.textContent = "You win this round!";
+            } else if (aiScore > myScore) {
+              el.verdict.textContent = "Robo wins this round!";
+            } else {
+              el.verdict.textContent = "It is a tie!";
+            }
+            el["result-detail"].innerHTML =
+              verdictFor(myScore) + ' <span class="who-you">You scored ' + myScore + '.</span> ' +
+              '<span class="who-robo">Robo scored ' + aiScore + '.</span>';
+          } else {
+            el.verdict.textContent = verdictFor(myScore);
+            el["result-detail"].textContent = "You scored " + myScore + " out of 100.";
+          }
+          renderTop();
+        }
+
+        function showFinal() {
+          el["screen-game"].hidden = true;
+          el["screen-final"].hidden = false;
+          var youTotal = sum(youScores);
+          var totalsEl = el.totals;
+          var html = "";
+
+          if (mode === "vsai") {
+            var roboTotal = sum(roboScores);
+            el["final-title"].textContent = "Game over";
+            if (youTotal > roboTotal) el["winner-line"].textContent = "You win! Great mixing, champion.";
+            else if (roboTotal > youTotal) el["winner-line"].textContent = "Robo wins this time. Rematch?";
+            else el["winner-line"].textContent = "It is a tie! What a match.";
+            totalsEl.className = "totals two";
+            html =
+              '<div class="total-box you"><div class="t-name">You</div>' +
+              '<div class="t-score">' + youTotal + '</div><div class="t-out">out of 500</div></div>' +
+              '<div class="total-box robo"><div class="t-name">Robo</div>' +
+              '<div class="t-score">' + roboTotal + '</div><div class="t-out">out of 500</div></div>';
+          } else {
+            el["final-title"].textContent = "Game over";
+            var avg = youTotal / ROUNDS;
+            if (avg >= 90) el["winner-line"].textContent = "Colour master! Amazing mixing.";
+            else if (avg >= 70) el["winner-line"].textContent = "Great mixing!";
+            else if (avg >= 50) el["winner-line"].textContent = "Nice work, mixer.";
+            else el["winner-line"].textContent = "Good try. Play again and beat it!";
+            totalsEl.className = "totals";
+            html =
+              '<div class="total-box"><div class="t-name">Your total</div>' +
+              '<div class="t-score">' + youTotal + '</div><div class="t-out">out of 500</div></div>';
+          }
+          totalsEl.innerHTML = html;
+
+          var bHtml = "";
+          for (var i = 0; i < ROUNDS; i++) {
+            bHtml += '<li><span class="b-swatch" style="background:' + rgb(targets[i]) + '"></span>' +
+              '<span class="b-round">Round ' + (i + 1) + '</span>';
+            if (mode === "vsai") {
+              var win = "";
+              if (youScores[i] > roboScores[i]) win = "You won";
+              else if (roboScores[i] > youScores[i]) win = "Robo won";
+              else win = "Tie";
+              bHtml += '<span>You ' + youScores[i] + ' · Robo ' + roboScores[i] + '</span>' +
+                '<span class="b-win">' + win + '</span>';
+            } else {
+              bHtml += '<span>' + youScores[i] + ' pts</span>';
+            }
+            bHtml += '</li>';
+          }
+          el.breakdown.innerHTML = bHtml;
+          window.scrollTo(0, 0);
+        }
+
+        function goMode() {
+          el["screen-game"].hidden = true;
+          el["screen-final"].hidden = true;
+          el["screen-mode"].hidden = false;
+          window.scrollTo(0, 0);
+        }
+
+        el["btn-solo"].addEventListener("click", function () { startGame("solo"); });
+        el["btn-vsai"].addEventListener("click", function () { startGame("vsai"); });
+        el["btn-check"].addEventListener("click", doCheck);
+        el["btn-next"].addEventListener("click", function () {
+          if (round === ROUNDS - 1) { showFinal(); return; }
+          round++;
+          startRound();
+        });
+        el["btn-quit"].addEventListener("click", goMode);
+        el["btn-mode"].addEventListener("click", goMode);
+        el["btn-again"].addEventListener("click", function () { startGame(mode); });
+      })();
+    </script>
+  </body>
+</html>
